@@ -1,0 +1,214 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title>
+      <span class="app-logo">🎬 AI Video Translator</span>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="main-content">
+  <!-- Language Selector Card -->
+  <div class="lang-card">
+    <div class="lang-row">
+      <div class="lang-block">
+        <label>From</label>
+        <ion-select
+          [(ngModel)]="sourceLang"
+          interface="action-sheet"
+          class="lang-select"
+        >
+          <ion-select-option
+            *ngFor="let lang of langService.languages"
+            [value]="lang.nllbCode"
+          >
+            {{ lang.flag }} {{ lang.name }}
+          </ion-select-option>
+        </ion-select>
+      </div>
+
+      <div class="arrow-icon">→</div>
+
+      <div class="lang-block">
+        <label>To</label>
+        <ion-select
+          [(ngModel)]="targetLang"
+          interface="action-sheet"
+          class="lang-select"
+        >
+          <ion-select-option
+            *ngFor="let lang of langService.languages"
+            [value]="lang.nllbCode"
+          >
+            {{ lang.flag }} {{ lang.name }}
+          </ion-select-option>
+        </ion-select>
+      </div>
+    </div>
+
+    <p class="auto-detect-note">
+      🔍 Source language auto-detected by Groq Whisper
+    </p>
+  </div>
+
+  <!-- Video Player Area -->
+  <div class="video-wrapper" *ngIf="videoSrc; else emptyState">
+    <div class="video-container">
+      <!-- Native Video Element -->
+      <video
+        #videoPlayer
+        [src]="videoSrc"
+        class="video-player"
+        preload="auto"
+        playsinline
+      ></video>
+
+      <!-- Subtitle Overlay -->
+      <div
+        class="subtitle-overlay"
+        [class.has-text]="videoService.currentSubtitle()"
+      >
+        <div class="subtitle-text" *ngIf="videoService.currentSubtitle()">
+          {{ videoService.currentSubtitle() }}
+        </div>
+      </div>
+
+      <!-- Processing Indicator -->
+      <div class="processing-badge" *ngIf="videoService.isProcessing()">
+        <ion-spinner name="dots"></ion-spinner>
+        <span>Thinking...</span>
+      </div>
+
+      <!-- Speaking Indicator -->
+      <div class="speaking-badge" *ngIf="videoService.state().isSpeaking">
+        <ion-icon name="volume-high" class="pulse-icon"></ion-icon>
+        <span>Speaking...</span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-container">
+      <div
+        class="progress-bar-fill"
+        [style.width.%]="videoService.progress()"
+      ></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-row">
+      <ion-button
+        fill="clear"
+        color="light"
+        (click)="stopVideo()"
+        class="ctrl-btn"
+      >
+        <ion-icon name="stop-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+
+      <ion-button
+        *ngIf="!isPlaying"
+        (click)="playAndTranslate()"
+        shape="round"
+        class="play-btn"
+      >
+        <ion-icon name="play" slot="start"></ion-icon>
+        Play & Translate
+      </ion-button>
+
+      <ion-button
+        *ngIf="isPlaying"
+        (click)="pauseVideo()"
+        shape="round"
+        fill="outline"
+        color="light"
+        class="play-btn"
+      >
+        <ion-icon name="pause" slot="start"></ion-icon>
+        Pause
+      </ion-button>
+
+      <div class="toggle-block">
+        <ion-label>Show Original</ion-label>
+        <ion-toggle [(ngModel)]="showOriginal" color="primary"></ion-toggle>
+      </div>
+    </div>
+
+    <!-- Original Text (toggle) -->
+    <div class="original-box" *ngIf="showOriginal && videoService.state().originalText">
+      <div class="original-label">
+        Original ({{ videoService.state().detectedLanguage || 'detected' }})
+      </div>
+      <p class="original-text">{{ videoService.state().originalText }}</p>
+    </div>
+
+    <!-- Voice Diagnostic Note -->
+    <div class="voice-note" *ngIf="videoService.state().voiceStatus">
+      <ion-icon name="information-circle-outline"></ion-icon>
+      <span>{{ videoService.state().voiceStatus }}</span>
+    </div>
+
+    <!-- Voice Diagnostic Tools -->
+    <div class="diagnostic-box" *ngIf="availableVoices.length >= 0">
+      <div class="diag-header">
+        <ion-icon name="pulse-outline"></ion-icon>
+        <span>Voice Diagnostics</span>
+      </div>
+      <div class="diag-item">
+        <span>Speech Engine:</span>
+        <ion-badge [color]="availableVoices.length > 0 ? 'success' : 'warning'">
+          {{ availableVoices.length > 0 ? 'ACTIVE (NATIVE)' : 'READY/NO VOICES' }}
+        </ion-badge>
+      </div>
+      <div class="diag-item">
+        <span>Voices Found:</span>
+        <strong>{{ availableVoices.length }}</strong>
+      </div>
+      <p class="diag-tip" *ngIf="availableVoices.length === 0">
+        ⚠️ Tip: Check "Text-to-Speech" in Android Settings and ensure Google is the Preferred Engine.
+      </p>
+      <ion-button fill="outline" size="small" (click)="refreshVoices()" color="primary" class="diag-btn">
+        <ion-icon name="refresh-outline" slot="start"></ion-icon>
+        Detect Voices Now
+      </ion-button>
+    </div>
+
+    <div class="footer-info">
+      <ion-note color="danger" *ngIf="videoService.state().error" class="error-note">
+        ⚠️ {{ videoService.state().error }}
+      </ion-note>
+      
+      <ion-button fill="clear" size="small" (click)="testVoice()" color="medium">
+        <ion-icon name="volume-high-outline" slot="start"></ion-icon>
+        Test Voice (English)
+      </ion-button>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <ng-template #emptyState>
+    <div class="empty-state">
+      <div class="empty-icon">🎥</div>
+      <h2>Pick a Video to Translate</h2>
+      <p>AI-powered subtitles in 200+ languages<br />Powered by Groq Whisper + NLLB-200</p>
+      <ion-button (click)="openFilePicker()" size="large" shape="round" class="pick-btn">
+        <ion-icon name="cloud-upload-outline" slot="start"></ion-icon>
+        Choose Video
+      </ion-button>
+    </div>
+  </ng-template>
+
+  <!-- Hidden file input -->
+  <input
+    #fileInput
+    type="file"
+    accept="video/*"
+    style="display: none"
+    (change)="onFileSelected($event)"
+  />
+
+  <!-- FAB to pick another video when one is loaded -->
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed" *ngIf="videoSrc">
+    <ion-fab-button (click)="openFilePicker()" color="primary">
+      <ion-icon name="folder-open-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>
