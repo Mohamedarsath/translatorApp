@@ -50,6 +50,7 @@ export class VideoLogicService {
   private audioBuffer: AudioBuffer | null = null;
   private speechQueue: { text: string; lang: string }[] = [];
   private isProcessingSpeech = false;
+  private videoElement: HTMLVideoElement | null = null;
 
   constructor(private http: HttpClient) {
     this.initNativeTTS();
@@ -97,6 +98,8 @@ export class VideoLogicService {
       await this.prefetchSegment(0, srcLang, tgtLang);
       this.prefetchSegment(5, srcLang, tgtLang);
       this.prefetchSegment(10, srcLang, tgtLang);
+
+      this.videoElement = videoElement;
 
       videoElement.addEventListener('timeupdate', () => {
         this.onTimeUpdate(videoElement, srcLang, tgtLang);
@@ -327,9 +330,22 @@ export class VideoLogicService {
     const { text, lang } = this.speechQueue.shift()!;
 
     try {
+      // PRO SYNC: Pause video while speaking to ensure user hears everything in order
+      if (this.videoElement && !this.videoElement.paused) {
+        this.videoElement.pause();
+        console.log('[VideoLogic] Path: Auto-pausing video for speech sync.');
+      }
+
       await this.speak(text, lang);
     } finally {
       this.isProcessingSpeech = false;
+      
+      // Resume video if there's nothing else in the queue
+      if (this.speechQueue.length === 0 && this.videoElement && this.videoElement.paused) {
+        this.videoElement.play().catch(() => {});
+        console.log('[VideoLogic] Path: Resuming video after speech.');
+      }
+
       // Small pause between segments for natural rhythm
       setTimeout(() => this.processSpeechQueue(), 300);
     }
