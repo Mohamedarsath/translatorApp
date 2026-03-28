@@ -4,18 +4,18 @@ An AI-powered video translation application that converts any video file into 20
 
 ## 🚀 Key Features
 - **Instant Translation**: Upload a video and get translated voiceovers in seconds.
-- **200+ Languages**: Powered by Meta's NLLB-200 and Groq Whisper.
+- **200+ Languages**: Powered by **Meta's NLLB-200** (No Language Left Behind) via **Hugging Face** and **Groq Whisper**.
 - **Native Android Support**: Optimized for Android 14 with a high-performance native speech engine.
 - **Serial Audio Queue**: Ensures perfectly synchronized, non-overlapping voiceovers.
-- **Real-time Subtitles**: Dynamic subtitle overlays that match the spoken audio.
 
 ## 🛠️ Tech Stack
 - **Mobile App**: Ionic / Angular / Capacitor
 - **Native Bridge**: `@capacitor-community/text-to-speech`
 - **Backend API**: Node.js / Express
-- **AI Models**:
-  - **Transcription**: Groq Whisper (lightning fast)
-  - **Translation**: NLLB-200 (200+ languages)
+- **AI Models & Platforms**:
+  - **Transcription**: **Groq Whisper** (Large-v3)
+  - **Translation Engine**: **Hugging Face Inference API**
+  - **Core Model**: **Facebook/NLLB-200-distilled-600M**
   - **Speech**: Android Native TTS Engine
 - **Audio Processing**: Web Audio API (Frontend) & FFmpeg / Fluent-FFmpeg (Backend)
 
