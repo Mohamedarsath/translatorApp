@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
 
@@ -194,7 +194,7 @@ export class VideoLogicService {
 
       const result = await this.http
         .post<{ originalText: string; translatedText: string; detectedLanguage: string }>(
-          `${environment.serverUrl}/translate`,
+          `${environment.serverUrl}/translate?secret=${environment.appSecret}`,
           formData
         )
         .toPromise();
