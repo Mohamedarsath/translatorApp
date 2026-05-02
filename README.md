@@ -47,4 +47,4 @@ An AI-powered video translation application that converts any video file into 20
 This project is for educational and personal use.
 
 ---
-**Created with ❤️ and Antigravity AI.**
+**
